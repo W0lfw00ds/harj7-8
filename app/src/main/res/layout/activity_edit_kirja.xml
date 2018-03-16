@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.iirol.harjoitus78.EditKirja">
+
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="5dip">
+
+        <!-- Numero -->
+        <TableRow>
+
+            <!-- Numero otsikko -->
+            <TextView
+                android:text="Numero:"
+                android:textSize="18sp"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".35"/>
+
+            <!-- Numero -->
+            <EditText
+                android:id="@+id/numero"
+                android:hint="Numero"
+                android:inputType="number"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".65"/>
+
+        </TableRow>
+
+        <!-- Nimi -->
+        <TableRow>
+
+            <!-- Nimi otsikko -->
+            <TextView
+                android:text="Nimi:"
+                android:textSize="18sp"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".35"/>
+
+            <!-- Nimi -->
+            <EditText
+                android:id="@+id/nimi"
+                android:hint="Nimi"
+                android:inputType="textPersonName"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".65"/>
+
+        </TableRow>
+
+        <!-- Painos -->
+        <TableRow>
+
+            <!-- Painos otsikko -->
+            <TextView
+                android:text="Painos:"
+                android:textSize="18sp"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".35"/>
+
+            <!-- Painos -->
+            <EditText
+                android:id="@+id/painos"
+                android:hint="Painos"
+                android:inputType="number"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".65"/>
+
+        </TableRow>
+
+        <!-- Hankintapvm -->
+        <TableRow>
+
+            <!-- Hankintapvm otsikko -->
+            <TextView
+                android:text="Hankinta pvm:"
+                android:textSize="18sp"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".35"/>
+
+            <!-- Hankintapvm -->
+            <EditText
+                android:id="@+id/hankintapvm"
+                android:hint="Hankinta pp.kk.vvvv"
+                android:inputType="date"
+                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_weight=".65"/>
+
+        </TableRow>
+
+        <!-- Toiminnot -->
+        <TableRow>
+
+            <!-- Tallenna -->
+            <Button
+                android:id="@+id/tallenna"
+                android:text="Tallenna" />
+
+            <!-- Peruuta -->
+            <Button
+                android:id="@+id/peruuta"
+                android:text="Peruuta" />
+
+        </TableRow>
+
+    </TableLayout>
+
+</android.support.constraint.ConstraintLayout>
