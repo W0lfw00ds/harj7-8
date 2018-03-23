@@ -4,8 +4,7 @@ import java.util.ArrayList;
 
 public interface Repository<T> {
 
-	String getCreateTableIfNotExistsSQL();
-	void deleteTableIfExists();
+	String createTableIfNotExistsSQL();
 	String getTableName();
 	void clearTable();
 

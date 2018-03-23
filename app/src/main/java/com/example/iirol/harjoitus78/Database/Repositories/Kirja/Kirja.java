@@ -18,6 +18,9 @@ public class Kirja {
     public Kirja(int numero, String nimi, int painos, String hankintapvm) {
         this(null, numero, nimi, painos, hankintapvm);
     }
+    public Kirja() {
+
+    }
 
     public Integer getId() {
         return this.id;

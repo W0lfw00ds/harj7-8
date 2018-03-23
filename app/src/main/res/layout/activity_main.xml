@@ -7,92 +7,151 @@
     tools:context="com.example.iirol.harjoitus78.MainActivity">
 
     <!-- Lisäys ja poisto -->
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent">
 
-        <!-- Numero & Nimi -->
-        <TableRow
-            android:layout_width="wrap_content"
+        <!-- Yläosa -->
+        <TableLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:padding="5dip">
 
-            <!-- Numero -->
-            <EditText
-                android:id="@+id/numero"
-                android:hint="Numero"
-                android:inputType="number"
+            <!-- Numero & Nimi -->
+            <TableRow
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight=".25"/>
+                android:padding="5dip">
 
-            <!-- Nimi -->
-            <EditText
-                android:id="@+id/nimi"
-                android:hint="Nimi"
-                android:inputType="textPersonName"
+                <!-- Numero -->
+                <EditText
+                    android:id="@+id/numero"
+                    android:hint="Numero"
+                    android:inputType="number"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight=".25"
+                    android:enabled="false" />
+
+                <!-- Nimi -->
+                <EditText
+                    android:id="@+id/nimi"
+                    android:hint="Nimi"
+                    android:inputType="textPersonName"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight=".50"
+                    android:enabled="false" />
+
+            </TableRow>
+
+            <!-- Painos & Hankintapvm -->
+            <TableRow
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight=".50"/>
+                android:padding="5dip">
 
-        </TableRow>
+                <EditText
+                    android:id="@+id/painos"
+                    android:hint="Painos"
+                    android:inputType="number"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight=".25"
+                    android:enabled="false" />
 
-        <!-- Painos & Hankintapvm -->
-        <TableRow
-            android:layout_width="wrap_content"
+                <EditText
+                    android:id="@+id/hankintapvm"
+                    android:hint="Hankinta pp.kk.vvvv"
+                    android:inputType="date"
+                    android:layout_height="wrap_content"
+                    android:layout_width="0dp"
+                    android:layout_weight=".50"
+                    android:enabled="false" />
+
+            </TableRow>
+
+            <!-- Add-new & Delete-first -->
+            <TableRow
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="5dip">
+
+                <Button
+                    android:id="@+id/addnew"
+                    android:text="ADD NEW"
+                    android:enabled="false" />
+
+                <Button
+                    android:id="@+id/deletefirst"
+                    android:text="DELETE FIRST"
+                    android:enabled="false" />
+
+            </TableRow>
+
+            <!-- Scrollaus listauksen ympärillä -->
+            <ScrollView
+                android:id="@+id/listausScroll"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="5dip">
+
+                <!-- Listaus -->
+                <TableLayout
+                    android:id="@+id/listaus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+                </TableLayout>
+
+            </ScrollView>
+
+        </TableLayout >
+
+        <!-- Kirjautuminen -->
+        <RelativeLayout
+            android:id="@+id/InnerRelativeLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="5dip">
+            android:layout_alignParentBottom="true"
+            android:background="@color/colorPrimaryDark">
 
-            <EditText
-                android:id="@+id/painos"
-                android:hint="Painos"
-                android:inputType="number"
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight=".25"/>
-
-            <EditText
-                android:id="@+id/hankintapvm"
-                android:hint="Hankinta pp.kk.vvvv"
-                android:inputType="date"
-                android:layout_height="wrap_content"
-                android:layout_width="0dp"
-                android:layout_weight=".50"/>
-
-        </TableRow>
-
-        <!-- Add-new & Delete-first -->
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dip">
-
-            <Button
-                android:id="@+id/addnew"
-                android:text="ADD NEW" />
-
-            <Button
-                android:id="@+id/deletefirst"
-                android:text="DELETE FIRST" />
-
-        </TableRow>
-
-        <!-- Listaus -->
-        <TableRow
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:padding="5dip">
-
-            <!-- Listaus -->
+            <!-- Kirjautuneen käyttäjän nimi ja kirjautumisnappi -->
             <TableLayout
-                android:id="@+id/listaus"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content">
+
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/colorPrimaryDark">
+
+                <!-- Kirjautunut käyttäjä & kirjautumisnappi -->
+                <TableRow
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <!-- Kirjautunut käyttäjä -->
+                    <TextView
+                        android:id="@+id/loggedUser"
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight=".70"
+                        android:layout_marginLeft="10dp"
+                        android:layout_marginRight="10dp"
+                        android:textColor="#FFFFFF"
+                        android:text="Not logged in" />
+
+                    <!-- Log in/out nappi -->
+                    <Button
+                        android:id="@+id/logInOrOut"
+                        android:layout_height="wrap_content"
+                        android:layout_width="0dp"
+                        android:layout_weight=".30"
+                        android:text="Log in" />
+
+                </TableRow>
 
             </TableLayout>
 
-        </TableRow>
+        </RelativeLayout>
 
-    </TableLayout>
+    </RelativeLayout >
 
 </android.support.constraint.ConstraintLayout>
