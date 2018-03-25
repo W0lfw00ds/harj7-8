@@ -13,8 +13,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.iirol.harjoitus78.Database.Database;
+import com.example.iirol.harjoitus78.Database.Repositories.DatabaseException;
 import com.example.iirol.harjoitus78.Database.Repositories.Kirja.Kirja;
 import com.example.iirol.harjoitus78.Database.Repositories.Kirja.KirjaRepository;
+import com.example.iirol.harjoitus78.Database.Repositories.Repository;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -29,10 +31,10 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-	// VARIABLES
+	// CONSTANTS
 	private static final int RC_SIGN_IN = 123;
-	private FirebaseAuth firebaseAuth;
 
+	// VARIABLES
 	private EditText numero;
 	private EditText nimi;
 	private EditText painos;
@@ -91,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
 
 		// Luo uusi bundle mihin kootaan välitettävät parametrit toiselle activitylle
 		Bundle bundle = new Bundle();
-		bundle.putInt(KirjaRepository.COLUMN_ID, editableKirja.getId());
+		bundle.putString(KirjaRepository.COLUMN_ID, editableKirja.getKey());
 		bundle.putInt(KirjaRepository.COLUMN_NUMERO, editableKirja.getNumero());
 		bundle.putString(KirjaRepository.COLUMN_NIMI, editableKirja.getNimi());
 		bundle.putInt(KirjaRepository.COLUMN_PAINOS, editableKirja.getPainos());
@@ -104,7 +106,7 @@ public class MainActivity extends AppCompatActivity {
 		// Siirry toiseen activityyn
 		this.startActivity(intent);
 	}
-	private void addnew_click(View view) {
+	private void addnew_click(final View view) {
 
 		// Numero
 		String parsedStringNumero = this.numero.getText().toString();
@@ -144,39 +146,61 @@ public class MainActivity extends AppCompatActivity {
 			return;
 		}
 
+		// Disabloi nappula
+		view.setEnabled(false);
+
 		// Luo uusi kirja
 		Kirja uusiKirja = new Kirja(parsedNumero, parsedNimi, parsedPainos, parsedStringHankintapvm);
-		if (this.database.KirjaRepository.add(uusiKirja) > 0) {
+		this.database.KirjaRepository.add(uusiKirja, new Repository.ResultListener() {
 
-			Toast.makeText(getApplicationContext(),"Uusi kirja lisätty!", Toast.LENGTH_LONG).show();
+			@Override public void onSuccess() {
+				Toast.makeText(getApplicationContext(),"Uusi kirja lisätty!", Toast.LENGTH_LONG).show();
+				MainActivity.this.listaaKirjat();
+				view.setEnabled(true);
+			}
 
-			// Päivitä näkymä
-			this.listaaKirjat();
+			@Override public void onError(DatabaseException repositoryException) {
+				Toast.makeText(getApplicationContext(),"Jotakin meni pieleen uuden luonnissa...", Toast.LENGTH_LONG).show();
+				view.setEnabled(true);
+			}
 
-		} else {
-			// Jotakin meni pieleen
-			Toast.makeText(getApplicationContext(),"Jotakin meni pieleen uuden luonnissa...", Toast.LENGTH_LONG).show();
-		}
+		});
 
 	}
-	private void deletefirst_click(View view) {
+	private void deletefirst_click(final View view) {
+
+		// Disabloi nappula
+		view.setEnabled(false);
 
 		// Poista ensimmäinen rivi tietokannasta
-		if (this.database.KirjaRepository.deleteFirst()) {
-			Toast.makeText(getApplicationContext(),"Ensimmäinen kirja poistettiin!", Toast.LENGTH_LONG).show();
-		} else {
-			Toast.makeText(getApplicationContext(),"Kirjoja ei ole!", Toast.LENGTH_LONG).show();
-		}
+		this.database.KirjaRepository.deleteFirst(
+			new Repository.ResultListener() {
 
-		// Päivitä näkymä
-		this.listaaKirjat();
+				@Override public void onSuccess() {
+	                  Toast.makeText(getApplicationContext(),"Ensimmäinen kirja poistettiin!", Toast.LENGTH_LONG).show();
+                      MainActivity.this.listaaKirjat();
+                      view.setEnabled(true);
+                  }
+
+                  @Override public void onError(DatabaseException repositoryException) {
+	                  Toast.makeText(getApplicationContext(),"Kirjoja ei ole!", Toast.LENGTH_LONG).show();
+                      view.setEnabled(true);
+                  }
+
+              }
+		);
+
+
+
 	}
-	private void logInOrOut_click(View view) {
+	private void logInOrOut_click(final View view) {
 
 		if (FirebaseAuth.getInstance().getCurrentUser() != null) {
 
+			view.setEnabled(false);
 			AuthUI.getInstance().signOut(this).addOnCompleteListener(new OnCompleteListener<Void>() {
 				public void onComplete(@NonNull Task<Void> task) {
+					view.setEnabled(true);
 					userLoginChanged();
 				}
 			});
@@ -195,7 +219,6 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 	}
-
 	private void userLoginChanged() {
 
 		// Tarkasta onko käyttäjä kirjautunut sisään
@@ -229,33 +252,42 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		// Hae kannasta kaikki kirjat nousevassa järjestyksessä päivämäärän mukaan
-		ArrayList<Kirja> kirjat = this.database.KirjaRepository.getAll();
+		this.database.KirjaRepository.getAll(new Repository.ResultItemsListener<Kirja>() {
 
-		// Käy jokainen löytynyt kirja läpi
-		for (Kirja kirja : kirjat) {
+			@Override public void onSuccess(ArrayList<Kirja> kirjat) {
 
-			// Luo kirjalle oma teksti-elementtie UI:lle
-			TextView textView = new TextView(this);
-			textView.setText(kirja.toString());
-			textView.setTextSize(17f);
+					// Käy jokainen löytynyt kirja läpi
+					for (Kirja kirja : kirjat) {
 
-			// Lisää rivi jonka sisälle teksti laitetaan
-			TableRow tableRow = new TableRow(this);
-			tableRow.setPadding(5, 5, 5, 5);
-			tableRow.addView(textView);
-			tableRow.setTag(kirja); // Lisää Kirja-olion referenssi 'TableRow'iin
+						// Luo kirjalle oma teksti-elementtie UI:lle
+						TextView textView = new TextView(MainActivity.this);
+						textView.setText(kirja.toString());
+						textView.setTextSize(17f);
 
-			// Lisää "onclick"-kuuntelija riville kun sitä painaa, niin avataan toinen sivu
-			tableRow.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View view) {
-					MainActivity.this.edit_click(view);
-				}
-			});
+						// Lisää rivi jonka sisälle teksti laitetaan
+						TableRow tableRow = new TableRow(MainActivity.this);
+						tableRow.setPadding(5, 5, 5, 5);
+						tableRow.addView(textView);
+						tableRow.setTag(kirja); // Lisää Kirja-olion referenssi 'TableRow'iin
 
-			// Nyt lisää rivi UI:lle uutena rivinä
-			this.listaus.addView(tableRow);
-		}
+						// Lisää "onclick"-kuuntelija riville kun sitä painaa, niin avataan toinen sivu
+						tableRow.setOnClickListener(new View.OnClickListener() {
+							@Override
+							public void onClick(View view) {
+								MainActivity.this.edit_click(view);
+							}
+						});
+
+						// Nyt lisää rivi UI:lle uutena rivinä
+						MainActivity.this.listaus.addView(tableRow);
+					}
+			}
+
+			@Override public void onError(DatabaseException repositoryException) {
+				Toast.makeText(MainActivity.this, "Kirjoja ei jostakin syystä saatu!", Toast.LENGTH_LONG).show();
+			}
+
+		});
 
 	}
 
@@ -267,7 +299,6 @@ public class MainActivity extends AppCompatActivity {
 
 		this.sdf = new SimpleDateFormat("dd.MM.yyyy");
 		this.database = Database.getInstance();
-
 	}
 	@Override public void onStart() {
 		super.onStart();

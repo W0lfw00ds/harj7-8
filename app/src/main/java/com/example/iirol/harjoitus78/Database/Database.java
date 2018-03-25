@@ -6,7 +6,7 @@ import com.google.firebase.auth.FirebaseAuth;
 public class Database {
 
     // FIELDS
-    public KirjaRepository KirjaRepository;
+    public com.example.iirol.harjoitus78.Database.Repositories.Kirja.KirjaRepository KirjaRepository;
 
     // Singleton
     private static Database instance;
@@ -17,6 +17,14 @@ public class Database {
         }
 
         return Database.instance;
+    }
+
+    // METHODS
+    public static String getUserKey() {
+        if (FirebaseAuth.getInstance().getCurrentUser() == null) {
+            throw new IllegalStateException("Käyttäjä ei ole kirjautunut!");
+        }
+        return FirebaseAuth.getInstance().getCurrentUser().getEmail().replace(".", ",");
     }
 
     // CONSTRUCTORS

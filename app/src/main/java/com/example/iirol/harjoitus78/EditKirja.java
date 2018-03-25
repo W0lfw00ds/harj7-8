@@ -1,34 +1,19 @@
 package com.example.iirol.harjoitus78;
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.iirol.harjoitus78.Database.Database;
+import com.example.iirol.harjoitus78.Database.Repositories.DatabaseException;
 import com.example.iirol.harjoitus78.Database.Repositories.Kirja.Kirja;
 import com.example.iirol.harjoitus78.Database.Repositories.Kirja.KirjaRepository;
-import com.firebase.ui.auth.AuthUI;
-import com.firebase.ui.auth.IdpResponse;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
-
-import java.util.Arrays;
-import java.util.List;
+import com.example.iirol.harjoitus78.Database.Repositories.Repository;
 
 public class EditKirja extends AppCompatActivity {
-
-	private static final int RC_SIGN_IN = 123;
-	private FirebaseAuth firebaseAuth;
-	private FirebaseUser firebaseUser;
 
 	private EditText numero;
 	private EditText nimi;
@@ -47,14 +32,13 @@ public class EditKirja extends AppCompatActivity {
 		this.painos = this.findViewById(R.id.painos);
 		this.hankintapvm = this.findViewById(R.id.hankintapvm);
 		this.tallenna = this.findViewById(R.id.tallenna);
-		this.peruuta = this.findViewById(R.id.peruuta);
-
 		this.tallenna.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
 				EditKirja.this.tallenna_click(view);
 			}
 		});
+		this.peruuta = this.findViewById(R.id.peruuta);
 		this.peruuta.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View view) {
@@ -76,15 +60,26 @@ public class EditKirja extends AppCompatActivity {
 			return;
 		}
 
-		// Yritä päivittää kirjan tiedot tietokantaan
-		if (this.database.KirjaRepository.modify(this.editableKirja)) {
-			Toast.makeText(getApplicationContext(),"Kirja muokattiin tietokantaan onnistuneesti!", Toast.LENGTH_LONG).show();
-		} else {
-			Toast.makeText(getApplicationContext(),"Jotakin kirjaa päivitettäessä tietokantaan meni pieleen...", Toast.LENGTH_LONG).show();
-		}
+		// Disabloi napin painaminen
+		view.setEnabled(false);
 
-		// Sulje sivu ja palaa kirjojen listaukseen
-		this.finish();
+		this.database.KirjaRepository.modify(this.editableKirja, new Repository.ResultListener() {
+
+			@Override public void onSuccess() {
+				Toast.makeText(getApplicationContext(),"Kirja muokattiin tietokantaan onnistuneesti!", Toast.LENGTH_LONG).show();
+
+				// Sulje sivu ja palaa kirjojen listaukseen
+				EditKirja.this.finish();
+			}
+
+			@Override public void onError(DatabaseException repositoryException) {
+				Toast.makeText(getApplicationContext(),"Jotakin kirjaa päivitettäessä tietokantaan meni pieleen...", Toast.LENGTH_LONG).show();
+
+				// Sulje sivu ja palaa kirjojen listaukseen
+				EditKirja.this.finish();
+			}
+		});
+
 	}
 	private void peruuta_click(View view) {
 		this.finish();
@@ -103,14 +98,14 @@ public class EditKirja extends AppCompatActivity {
 		this.getViews();
 
 		// Lue lähetetyn kirjan tiedot
-		int id = getIntent().getIntExtra(KirjaRepository.COLUMN_ID, 0);
+		String id = getIntent().getStringExtra(KirjaRepository.COLUMN_ID);
 		int numero = getIntent().getIntExtra(KirjaRepository.COLUMN_NUMERO, 0);
 		String nimi = getIntent().getStringExtra(KirjaRepository.COLUMN_NIMI);
 		int painos = getIntent().getIntExtra(KirjaRepository.COLUMN_PAINOS, 0);
 		String hankintapvm = getIntent().getStringExtra(KirjaRepository.COLUMN_HANKINTAPVM);
 
 		this.editableKirja = new Kirja(id, numero, nimi, painos, hankintapvm);
-		//this.database = Database.getInstance(this);
+		this.database = Database.getInstance();
 
 		// Listaa kirja editoitavaksi
 		this.listaaKirja();
