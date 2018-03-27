@@ -12,11 +12,12 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.example.iirol.harjoitus78.Database.Database;
-import com.example.iirol.harjoitus78.Database.Repositories.DatabaseException;
-import com.example.iirol.harjoitus78.Database.Repositories.Kirja.Kirja;
-import com.example.iirol.harjoitus78.Database.Repositories.Kirja.KirjaRepository;
-import com.example.iirol.harjoitus78.Database.Repositories.Repository;
+import com.example.iirol.harjoitus78.Database.Firebase.FirebaseDatabase;
+import com.example.iirol.harjoitus78.Database.DatabaseException;
+import com.example.iirol.harjoitus78.Database.Firebase.FirebaseRepository;
+import com.example.iirol.harjoitus78.Database.Entities.Kirja;
+import com.example.iirol.harjoitus78.Database.Firebase.Repositories.KirjaFirebaseRepository;
+import com.example.iirol.harjoitus78.Database.Repository;
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.auth.IdpResponse;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -34,7 +35,7 @@ public class MainActivity extends AppCompatActivity {
 	// CONSTANTS
 	private static final int RC_SIGN_IN = 123;
 
-	// VARIABLES
+	// FIELDS
 	private EditText numero;
 	private EditText nimi;
 	private EditText painos;
@@ -46,7 +47,7 @@ public class MainActivity extends AppCompatActivity {
 	private Button logInOrOut;
 
 	private SimpleDateFormat sdf;
-	private Database database;
+	private FirebaseDatabase firebaseDatabase;
 
 	// METHODS
 	private void getViews() {
@@ -91,17 +92,9 @@ public class MainActivity extends AppCompatActivity {
 		TableRow clickedTableRow = (TableRow)view;
 		Kirja editableKirja = (Kirja)clickedTableRow.getTag();
 
-		// Luo uusi bundle mihin kootaan välitettävät parametrit toiselle activitylle
-		Bundle bundle = new Bundle();
-		bundle.putString(KirjaRepository.COLUMN_ID, editableKirja.getKey());
-		bundle.putInt(KirjaRepository.COLUMN_NUMERO, editableKirja.getNumero());
-		bundle.putString(KirjaRepository.COLUMN_NIMI, editableKirja.getNimi());
-		bundle.putInt(KirjaRepository.COLUMN_PAINOS, editableKirja.getPainos());
-		bundle.putString(KirjaRepository.COLUMN_HANKINTAPVM, editableKirja.getHankintapvm());
-
 		// Luo uusi intent millä siirrytään activitystä toiseen, ja lisää bundle siihen mukaan
 		Intent intent = new Intent(this, EditKirja.class);
-		intent.putExtras(bundle);
+		intent.putExtra(Kirja.class.getSimpleName(), editableKirja);
 
 		// Siirry toiseen activityyn
 		this.startActivity(intent);
@@ -151,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
 
 		// Luo uusi kirja
 		Kirja uusiKirja = new Kirja(parsedNumero, parsedNimi, parsedPainos, parsedStringHankintapvm);
-		this.database.KirjaRepository.add(uusiKirja, new Repository.ResultListener() {
+		this.firebaseDatabase.KirjaRepository.add(uusiKirja, new FirebaseRepository.ResultListener() {
 
 			@Override public void onSuccess() {
 				Toast.makeText(getApplicationContext(),"Uusi kirja lisätty!", Toast.LENGTH_LONG).show();
@@ -173,8 +166,8 @@ public class MainActivity extends AppCompatActivity {
 		view.setEnabled(false);
 
 		// Poista ensimmäinen rivi tietokannasta
-		this.database.KirjaRepository.deleteFirst(
-			new Repository.ResultListener() {
+		this.firebaseDatabase.KirjaRepository.deleteFirst(
+			new FirebaseRepository.ResultListener() {
 
 				@Override public void onSuccess() {
 	                  Toast.makeText(getApplicationContext(),"Ensimmäinen kirja poistettiin!", Toast.LENGTH_LONG).show();
@@ -252,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
 		}
 
 		// Hae kannasta kaikki kirjat nousevassa järjestyksessä päivämäärän mukaan
-		this.database.KirjaRepository.getAll(new Repository.ResultItemsListener<Kirja>() {
+		this.firebaseDatabase.KirjaRepository.getAll(new FirebaseRepository.ResultItemsListener<Kirja>() {
 
 			@Override public void onSuccess(ArrayList<Kirja> kirjat) {
 
@@ -298,7 +291,7 @@ public class MainActivity extends AppCompatActivity {
 		this.getViews();
 
 		this.sdf = new SimpleDateFormat("dd.MM.yyyy");
-		this.database = Database.getInstance();
+		this.firebaseDatabase = FirebaseDatabase.getInstance();
 	}
 	@Override public void onStart() {
 		super.onStart();
@@ -315,6 +308,21 @@ public class MainActivity extends AppCompatActivity {
 		} else {
 			Toast.makeText(this, "Kirjauduttu sisään käyttäjänä " + FirebaseAuth.getInstance().getCurrentUser().getDisplayName(), Toast.LENGTH_LONG).show();
 		}
+
+		harjoitus78.getSQLiteDatabase().KirjaRepository.add(new Kirja(2, "toka", 2, "25.01.2017"));
+		harjoitus78.getSQLiteDatabase().KirjaRepository.getAll(new Repository.ResultItemsListener<Kirja>() {
+
+			@Override public void onSuccess(ArrayList<Kirja> entities) {
+				for (Kirja kirja : entities) {
+					System.out.print(kirja.toString());
+				}
+			}
+
+			@Override public void onError(DatabaseException databaseException) {
+				System.out.print(databaseException.toString());
+			}
+
+		});
 
 	}
 	@Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {

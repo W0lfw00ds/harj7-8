@@ -7,14 +7,14 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import com.example.iirol.harjoitus78.Database.Database;
-import com.example.iirol.harjoitus78.Database.Repositories.DatabaseException;
-import com.example.iirol.harjoitus78.Database.Repositories.Kirja.Kirja;
-import com.example.iirol.harjoitus78.Database.Repositories.Kirja.KirjaRepository;
-import com.example.iirol.harjoitus78.Database.Repositories.Repository;
+import com.example.iirol.harjoitus78.Database.Firebase.FirebaseDatabase;
+import com.example.iirol.harjoitus78.Database.DatabaseException;
+import com.example.iirol.harjoitus78.Database.Entities.Kirja;
+import com.example.iirol.harjoitus78.Database.Firebase.FirebaseRepository;
 
 public class EditKirja extends AppCompatActivity {
 
+	// FIELDS
 	private EditText numero;
 	private EditText nimi;
 	private EditText painos;
@@ -22,9 +22,10 @@ public class EditKirja extends AppCompatActivity {
 	private Button tallenna;
 	private Button peruuta;
 
-	private Database database;
+	private FirebaseDatabase firebaseDatabase;
 	private Kirja editableKirja;
 
+	// METHODS
 	private void getViews() {
 
 		this.numero = this.findViewById(R.id.numero);
@@ -63,7 +64,7 @@ public class EditKirja extends AppCompatActivity {
 		// Disabloi napin painaminen
 		view.setEnabled(false);
 
-		this.database.KirjaRepository.modify(this.editableKirja, new Repository.ResultListener() {
+		this.firebaseDatabase.KirjaRepository.modify(this.editableKirja, new FirebaseRepository.ResultListener() {
 
 			@Override public void onSuccess() {
 				Toast.makeText(getApplicationContext(),"Kirja muokattiin tietokantaan onnistuneesti!", Toast.LENGTH_LONG).show();
@@ -94,18 +95,13 @@ public class EditKirja extends AppCompatActivity {
 	// @Activity
 	@Override protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_edit_kirja);
+		this.setContentView(R.layout.activity_edit_kirja);
 		this.getViews();
 
-		// Lue lähetetyn kirjan tiedot
-		String id = getIntent().getStringExtra(KirjaRepository.COLUMN_ID);
-		int numero = getIntent().getIntExtra(KirjaRepository.COLUMN_NUMERO, 0);
-		String nimi = getIntent().getStringExtra(KirjaRepository.COLUMN_NIMI);
-		int painos = getIntent().getIntExtra(KirjaRepository.COLUMN_PAINOS, 0);
-		String hankintapvm = getIntent().getStringExtra(KirjaRepository.COLUMN_HANKINTAPVM);
+		// Lue lähetetty kirja
+		this.editableKirja = getIntent().getExtras().getParcelable(Kirja.class.getSimpleName());
 
-		this.editableKirja = new Kirja(id, numero, nimi, painos, hankintapvm);
-		this.database = Database.getInstance();
+		this.firebaseDatabase = FirebaseDatabase.getInstance();
 
 		// Listaa kirja editoitavaksi
 		this.listaaKirja();
