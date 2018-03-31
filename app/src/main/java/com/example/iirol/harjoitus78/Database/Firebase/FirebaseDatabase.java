@@ -20,11 +20,15 @@ public class FirebaseDatabase {
     }
 
     // METHODS
-    public static String getUserKey() {
+    public static String getUserRootNodeName() {
+
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
-            throw new IllegalStateException("Käyttäjä ei ole kirjautunut!");
+            throw new IllegalStateException("User is not logged in!");
+        } else {
+            // Firebase UID is used as the root parent for all user's data
+            return FirebaseAuth.getInstance().getCurrentUser().getUid();
         }
-        return FirebaseAuth.getInstance().getCurrentUser().getEmail().replace(".", ",");
+
     }
 
     // CONSTRUCTORS

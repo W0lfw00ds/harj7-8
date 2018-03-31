@@ -27,7 +27,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Lisää entity
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-				.child(FirebaseDatabase.getUserKey())
+				.child(FirebaseDatabase.getUserRootNodeName())
 				.child(entityClass.getSimpleName())
 				.push() // Luo automaattisesti generoidun avaimen (key)
 				.setValue(entity, new DatabaseReference.CompletionListener() {
@@ -66,7 +66,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Lisää entity
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.child(entity.getKey()) // Luo automaattisesti generoidun avaimen (key)
 			.setValue(entity, new DatabaseReference.CompletionListener() {
@@ -105,7 +105,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 		}
 
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.child(entity.getKey())
 			.removeValue(new DatabaseReference.CompletionListener() {
@@ -136,7 +136,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 	@Override public void deleteFirst(int count, final ResultListener resultListener) {
 
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.limitToFirst(count)
 			.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -180,7 +180,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Poista kaikki kirjat
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.removeValue(new DatabaseReference.CompletionListener() {
 
@@ -217,7 +217,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-				.child(FirebaseDatabase.getUserKey())
+				.child(FirebaseDatabase.getUserRootNodeName())
 				.child(entityClass.getSimpleName())
 				.addListenerForSingleValueEvent(new ValueEventListener() {
 
@@ -252,7 +252,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.child(key)
 			.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -285,7 +285,7 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserKey())
+			.child(FirebaseDatabase.getUserRootNodeName())
 			.child(entityClass.getSimpleName())
 			.limitToFirst(1)
 			.addListenerForSingleValueEvent(new ValueEventListener() {
