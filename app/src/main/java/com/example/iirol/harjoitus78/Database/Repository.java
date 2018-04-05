@@ -4,10 +4,18 @@ import java.util.ArrayList;
 
 public abstract class Repository<T extends Entity> {
 
-	// VARIABLES
+	// FIELDS
 	protected final Class<T> entityClass;
+	private String tableName;
 
 	// METHODS
+	public String getTableName() {
+		if (this.tableName == null) {
+			this.tableName = this.entityClass.getSimpleName();
+		}
+		return this.tableName;
+	}
+
 	public abstract void add(T entity, final Repository.ResultListener resultListener);
 	public abstract void add(T entity);
 
@@ -16,10 +24,9 @@ public abstract class Repository<T extends Entity> {
 
 	public abstract void delete(T entity, final Repository.ResultListener resultListener);
 	public abstract void delete(T entity);
-
 	public abstract void deleteFirst(int count, final ResultListener resultListener);
-	public abstract void deleteFirst(final ResultListener resultListener);
 	public abstract void deleteFirst(int count);
+	public abstract void deleteFirst(final ResultListener resultListener);
 	public abstract void deleteFirst();
 
 	public abstract void clear(final ResultListener resultListener);
@@ -27,7 +34,8 @@ public abstract class Repository<T extends Entity> {
 
 	public abstract void getAll(final ResultItemsListener<T> resultItemsListener);
 	public abstract void getByKey(String key, final ResultItemListener<T> resultItemListener);
-	public abstract void getFirst(final ResultItemListener<T> resultItemListener);
+	public abstract void getFirst(int count, final ResultItemsListener<T> resultItemsListener);
+	public abstract void getFirst(final ResultItemsListener<T> resultItemsListener);
 
 	// CONSTRUCTORS
 	public Repository(Class<T> entityClass) {

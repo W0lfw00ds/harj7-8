@@ -2,7 +2,7 @@ package com.example.iirol.harjoitus78.Database;
 
 public class DatabaseException {
 
-	// VARIABLES
+	// FIELDS
 	private String message;
 	private Object databaseError;
 

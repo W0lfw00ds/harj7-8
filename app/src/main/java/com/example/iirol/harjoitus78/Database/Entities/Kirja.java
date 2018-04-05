@@ -7,10 +7,10 @@ import com.example.iirol.harjoitus78.Database.Entity;
 public class Kirja extends Entity {
 
     // CONSTANTS
-    public static final String COLUMN_NUMERO = "numero";
-    public static final String COLUMN_NIMI = "nimi";
-    public static final String COLUMN_PAINOS = "painos";
-    public static final String COLUMN_HANKINTAPVM = "hankintapvm";
+    public static final String FIELD_NUMERO = "numero";
+    public static final String FIELD_NIMI = "nimi";
+    public static final String FIELD_PAINOS = "painos";
+    public static final String FIELD_HANKINTAPVM = "hankintapvm";
 
     // FIELDS
     private int numero;
@@ -20,27 +20,35 @@ public class Kirja extends Entity {
 
     // METHODS
     public int getNumero() {
+
         return this.numero;
     }
     public void setNumero(int numero) {
+
         this.numero = numero;
     }
     public String getNimi() {
+
         return this.nimi;
     }
     public void setNimi(String nimi) {
+
         this.nimi = nimi;
     }
     public int getPainos() {
+
         return this.painos;
     }
     public void setPainos(int painos) {
+
         this.painos = painos;
     }
     public String getHankintapvm() {
+
         return this.hankintapvm;
     }
     public void setHankintapvm(String hankintapvm) {
+
         this.hankintapvm = hankintapvm;
     }
 
@@ -65,8 +73,9 @@ public class Kirja extends Entity {
         return this.numero + ". " + this.nimi;
     }
 
-    // @Parceable
+    // @Parcelable
     @Override public int describeContents() {
+
         return 0;
     }
     @Override public void writeToParcel(Parcel dest, int flags) {

@@ -13,18 +13,22 @@ public class harjoitus78 extends Application {
 
 	// METHODS
 	public static Context getAppContext() {
+
 		return harjoitus78.context;
 	}
 	public static FirebaseDatabase getFirebaseDatabase() {
+
 		return FirebaseDatabase.getInstance();
 	}
 	public static SQLiteDatabase getSQLiteDatabase() {
+
 		return SQLiteDatabase.getInstance(harjoitus78.getAppContext());
 	}
 
 	// @Application
 	@Override public void onCreate() {
 		super.onCreate();
+
 		harjoitus78.context = this.getApplicationContext();
 	}
 

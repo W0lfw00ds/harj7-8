@@ -9,17 +9,17 @@ import java.util.ArrayList;
 
 public class SQLiteDatabase extends SQLiteOpenHelper {
 
-	// FIELDS STATIC
+	// CONSTANTS
 	private static final int DATABASE_VERSION = 2;
 	private static final String DATABASE_NAME = "SQLiteDatabase";
-	private ArrayList<SQLiteRepository> repositories;
 
-	// REPOSITORIES
+	// FIELDS
+	private static SQLiteDatabase instance;
+	private ArrayList<SQLiteRepository> repositories;
 	public KirjaSQLiteRepository KirjaRepository;
 
-	// Singleton
-	private static SQLiteDatabase instance;
-	public static SQLiteDatabase getInstance(Context context) {
+	// METHODS
+	public static synchronized SQLiteDatabase getInstance(Context context) {
 		if (SQLiteDatabase.instance == null) {
 			SQLiteDatabase.instance = new SQLiteDatabase(context);
 		}

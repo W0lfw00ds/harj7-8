@@ -77,7 +77,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 				Class type = field.getType();
 
 				// If 'key'-field
-				if (field.getName().equals(Entity.COLUMN_KEY)) {
+				if (field.getName().equals(Entity.FIELD_KEY)) {
 					field.set(entity, String.valueOf(cursor.getInt(columnIndex)));
 					continue;
 				}
@@ -122,7 +122,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 				Object value = field.get(entity);
 
 				// If 'key'-field
-				if (name.equals(Entity.COLUMN_KEY)) {
+				if (name.equals(Entity.FIELD_KEY)) {
 					if (skipKey) {
 						continue;
 					} else {
@@ -164,7 +164,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 	public void dropTableIfExists(android.database.sqlite.SQLiteDatabase writtableDatabase) {
 
 		try {
-			writtableDatabase.execSQL("DROP TABLE IF EXISTS " + this.entityClass.getSimpleName());
+			writtableDatabase.execSQL("DROP TABLE IF EXISTS " + this.getTableName());
 		} catch (SQLException ex) {
 			throw ex;
 		}
@@ -174,7 +174,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append("CREATE TABLE IF NOT EXISTS ");
-		sb.append(this.entityClass.getSimpleName());
+		sb.append(this.getTableName());
 		sb.append(" (");
 
 		boolean first = true;
@@ -185,7 +185,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			Class fieldType = field.getType();
 
 			// If 'key'-field - save as integer
-			if (fieldName.equals(Entity.COLUMN_KEY)) {
+			if (fieldName.equals(Entity.FIELD_KEY)) {
 				fieldType = int.class;
 			}
 
@@ -204,7 +204,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			sb.append(" ");
 
 			// If 'key' field, mark as 'PRIMARY KEY'
-			if (fieldName.equals(Entity.COLUMN_KEY)) {
+			if (fieldName.equals(Entity.FIELD_KEY)) {
 				sb.append("PRIMARY KEY AUTOINCREMENT");
 			} else {
 				sb.append("NOT NULL");
@@ -261,7 +261,6 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 	// @Repository<T>
 	@Override public void add(T entity, final ResultListener resultListener) {
 
-		// If null, error
 		if (entity == null) {
 			if (resultListener != null) {
 				resultListener.onError(new DatabaseException("Entity is 'null' and cannot be added!"));
@@ -269,12 +268,9 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			return;
 		}
 
-		// If entity has already been added, error
 		if (entity.getKey() != null) {
-
-			// Kirja on jo tietokannassa eikä sitä voi lisätä, virhe
 			if (resultListener != null) {
-				resultListener.onError(new DatabaseException("Entity has already been added in the database!"));
+				resultListener.onError(new DatabaseException("Entity already exists in the database!"));
 			}
 			return;
 		}
@@ -282,7 +278,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getWritableDatabase();
 		ContentValues values = this.entityToContentValues(entity, true);
 		long addedCount = db.insert(
-			entityClass.getSimpleName(),
+			this.getTableName(),
 			null,
 			values
 		);
@@ -298,12 +294,12 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 	}
 	@Override public void add(T entity) {
+
 		this.add(entity, null);
 	}
 
 	@Override public void modify(T entity, final ResultListener resultListener) {
 
-		// If null, error
 		if (entity == null) {
 			if (resultListener != null) {
 				resultListener.onError(new DatabaseException("Entity is 'null' and cannot be modified!"));
@@ -311,7 +307,6 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			return;
 		}
 
-		// If the entity isn't added to database
 		if (entity.getKey() == null) {
 			if (resultListener != null) {
 				resultListener.onError(new DatabaseException("Entity hasn't been added to database yet!"));
@@ -323,9 +318,9 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 		boolean updated = false;
 		ContentValues values = this.entityToContentValues(entity, true);
 		updated = db.update(
-				entityClass.getSimpleName(),
+				this.getTableName(),
 				values,
-				"key=?",
+				Entity.FIELD_KEY + "=?",
 				new String[] { String.valueOf(entity.getKey()) }
 		) > 0;
 		db.close();
@@ -340,12 +335,12 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 	}
 	@Override public void modify(T entity) {
+
 		this.modify(entity, null);
 	}
 
 	@Override public void delete(T entity, final FirebaseRepository.ResultListener resultListener) {
 
-		// If null, error
 		if (entity == null) {
 			if (resultListener != null) {
 				resultListener.onError(new DatabaseException("Entity is 'null' and cannot be deleted!"));
@@ -353,7 +348,6 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			return;
 		}
 
-		// If entity hasn't been added to database yet, return
 		if (entity.getKey() == null) {
 			if (resultListener != null) {
 				resultListener.onSuccess();
@@ -363,8 +357,8 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getWritableDatabase();
 		boolean deleted = db.delete(
-				entityClass.getSimpleName(),
-				"key=?",
+				this.getTableName(),
+				Entity.FIELD_KEY + "=?",
 				new String[] { String.valueOf(entity.getKey()) }
 		) > 0;
 		db.close();
@@ -379,6 +373,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 	}
 	@Override public void delete(T entity) {
+
 		this.delete(entity, null);
 	}
 
@@ -393,8 +388,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getWritableDatabase();
 		try {
-			//Delete from table WHERE id IN (SELECT id FROM table limit 100)
-			db.execSQL("DELETE FROM " + entityClass.getSimpleName() + " WHERE key IN (SELECT key FROM " + entityClass.getSimpleName() + " limit " + count + ")");
+			db.execSQL("DELETE FROM " + this.getTableName() + " WHERE " + Entity.FIELD_KEY + " IN (SELECT " + Entity.FIELD_KEY + " FROM " + this.getTableName() + " limit " + count + ")");
 			if (resultListener != null) {
 				resultListener.onSuccess();
 			}
@@ -410,13 +404,13 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 		}
 
 	}
-	@Override public void deleteFirst(final ResultListener resultListener) {
-
-		this.deleteFirst(1, resultListener);
-	}
 	@Override public void deleteFirst(int count) {
 
 		this.deleteFirst(count, null);
+	}
+	@Override public void deleteFirst(final ResultListener resultListener) {
+
+		this.deleteFirst(1, resultListener);
 	}
 	@Override public void deleteFirst() {
 
@@ -427,10 +421,10 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getWritableDatabase();
 		try {
-			db.execSQL("DELETE FROM " + entityClass.getSimpleName());
+			db.execSQL("DELETE FROM " + this.getTableName());
 		} catch (SQLException ex) {
 			if (resultListener != null) {
-				resultListener.onError(new DatabaseException("Kaikkia tietoja ei poistettu!", ex));
+				resultListener.onError(new DatabaseException("Not all entities were deleted!", ex));
 			}
 			return;
 		} finally {
@@ -449,16 +443,12 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 
 	@Override public void getAll(final ResultItemsListener<T> resultItemsListener) {
 
-		// Jos listeneriä ei annettu, error
 		if (resultItemsListener == null) {
-			throw new NullPointerException("Tietoja ei voi saada ilman 'ResultItemsListener<T>'-kuuntelijaa!");
+			throw new NullPointerException("Entities cannot be gotten without passed 'ResultItemsListener<T>'-listener!");
 		}
 
-		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getReadableDatabase();
-		ArrayList<T> entities = new ArrayList<>();
-
-		Cursor cursor = db.query(
-			entityClass.getSimpleName(),
+		Cursor cursor = this.sqliteDatabase.getReadableDatabase().query(
+			this.getTableName(),
 			this.getFieldNames(),
 			null,
 			null,
@@ -468,6 +458,7 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 			null
 		);
 
+		ArrayList<T> entities = new ArrayList<>();
 		if (cursor != null) {
 			if (cursor.moveToFirst()) {
 				while (!cursor.isAfterLast()) {
@@ -478,7 +469,6 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 					cursor.moveToNext();
 				}
 			}
-
 			cursor.close();
 		}
 
@@ -487,21 +477,18 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 	}
 	@Override public void getByKey(String key, final ResultItemListener<T> resultItemListener) {
 
-		// Jos listeneriä ei annettu, error
 		if (resultItemListener == null) {
-			throw new NullPointerException("Tietoa ei voi saada ilman 'ResultItemListener<T>'-kuuntelijaa!");
+			throw new NullPointerException("Entity cannot be gotten without passed 'ResultItemListener<T>'-listener!");
 		}
 
-		// Jos avainta ei annettu
 		if (key == null) {
 			throw new NullPointerException("'key' used for selection cannot be null!");
 		}
 
-		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getReadableDatabase();
-		Cursor cursor = db.query(
-			entityClass.getSimpleName(),
+		Cursor cursor = this.sqliteDatabase.getReadableDatabase().query(
+			this.getTableName(),
 			this.getFieldNames(),
-			"key=?",
+			Entity.FIELD_KEY + "=?",
 			new String[] {
 				key
 			},
@@ -522,35 +509,43 @@ public abstract class SQLiteRepository<T extends Entity> extends Repository<T> {
 		}
 
 	}
-	@Override public void getFirst(final ResultItemListener<T> resultItemListener) {
+	@Override public void getFirst(int count, final ResultItemsListener<T> resultItemsListener) {
 
-		// If there's no listener, error
-		if (resultItemListener == null) {
+		if (resultItemsListener == null) {
 			throw new NullPointerException("Entity cannot be queried without 'ResultItemListener<T>'!");
 		}
 
-		android.database.sqlite.SQLiteDatabase db = this.sqliteDatabase.getReadableDatabase();
-		Cursor cursor = db.query(
-			entityClass.getSimpleName(),
-			this.getFieldNames(),
-			null,
-			null,
-			null,
-			null,
-			"key ASC",
-			"1"
+		Cursor cursor = this.sqliteDatabase.getReadableDatabase().query(
+				this.getTableName(),
+				this.getFieldNames(),
+				null,
+				null,
+				null,
+				null,
+				Entity.FIELD_KEY + " ASC",
+				String.valueOf(count)
 		);
 
+		ArrayList<T> entities = new ArrayList<>();
 		if (cursor != null) {
-			cursor.moveToFirst();
+			if (cursor.moveToFirst()) {
+				while (!cursor.isAfterLast()) {
 
-			T entity = this.cursorToEntity(cursor);
+					T parsedEntity = this.cursorToEntity(cursor);
+					entities.add(parsedEntity);
+
+					cursor.moveToNext();
+				}
+			}
 			cursor.close();
-			resultItemListener.onSuccess(entity);
-		} else {
-			resultItemListener.onSuccess(null);
 		}
 
+		resultItemsListener.onSuccess(entities);
+
+	}
+	@Override public void getFirst(final ResultItemsListener<T> resultItemsListener) {
+
+		this.getFirst(1, resultItemsListener);
 	}
 
 }

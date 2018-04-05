@@ -336,7 +336,7 @@ public class MainActivity extends AppCompatActivity {
 	}
 	protected void onActivityResult_SignIn(int resultCode, Intent data) {
 
-		IdpResponse response = IdpResponse.fromResultIntent(data);
+		//IdpResponse response = IdpResponse.fromResultIntent(data);
 
 		if (resultCode == RESULT_OK) {
 

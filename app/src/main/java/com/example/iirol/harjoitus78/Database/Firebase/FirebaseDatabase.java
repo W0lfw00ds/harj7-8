@@ -6,11 +6,11 @@ import com.google.firebase.auth.FirebaseAuth;
 public class FirebaseDatabase {
 
     // FIELDS
+    private static FirebaseDatabase instance;
     public KirjaFirebaseRepository KirjaRepository;
 
-    // Singleton
-    private static FirebaseDatabase instance;
-    public static FirebaseDatabase getInstance() {
+    // METHODS
+    public static synchronized FirebaseDatabase getInstance() {
 
         if (FirebaseDatabase.instance == null) {
             FirebaseDatabase.instance = new FirebaseDatabase();
@@ -18,9 +18,7 @@ public class FirebaseDatabase {
 
         return FirebaseDatabase.instance;
     }
-
-    // METHODS
-    public static String getUserRootNodeName() {
+    public static synchronized String getUserRootNodeName() {
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             throw new IllegalStateException("User is not logged in!");
@@ -33,6 +31,7 @@ public class FirebaseDatabase {
 
     // CONSTRUCTORS
     private FirebaseDatabase() {
+
         this.KirjaRepository = new KirjaFirebaseRepository();
     }
 

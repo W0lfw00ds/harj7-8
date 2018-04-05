@@ -12,33 +12,183 @@ import java.util.ArrayList;
 
 public abstract class FirebaseRepository<T extends Entity> extends Repository<T> {
 
-	// METHODS
+	// CONSTRUCTORS
+	public FirebaseRepository(Class<T> entityClass) {
+
+		super(entityClass);
+	}
+
+	// @Repository<T>
 	@Override public void add(T entity, final ResultListener resultListener) {
 
-		// Jos entity on jo lisätty
 		if (entity.getKey() != null) {
-
-			// Kirja on jo tietokannassa eikä sitä voi lisätä, virhe
 			if (resultListener != null) {
-				resultListener.onError(new DatabaseException("Tieto on jo tietokannassa!"));
+				resultListener.onError(new DatabaseException("The entity cannot be added in the database because it has already been added before!"));
 			}
 			return;
 		}
 
-		// Lisää entity
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
 				.child(FirebaseDatabase.getUserRootNodeName())
-				.child(entityClass.getSimpleName())
-				.push() // Luo automaattisesti generoidun avaimen (key)
+				.child(this.getTableName())
+				.push() // Generates unique string key
 				.setValue(entity, new DatabaseReference.CompletionListener() {
 
 					@Override public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
 
 						if (databaseError != null) {
 							if (resultListener != null) {
-								resultListener.onError(new DatabaseException("Tietoa ei lisätty!", databaseError));
+								resultListener.onError(new DatabaseException("Entity wasn't added to the database!", databaseError));
 							}
-							System.out.println(databaseError.getMessage());
+						} else {
+							if (resultListener != null) {
+								resultListener.onSuccess();
+							}
+						}
+
+					}
+
+				});
+
+	}
+	@Override public void add(T entity) {
+
+		this.add(entity, null);
+	}
+
+	@Override public void modify(T entity, final ResultListener resultListener) {
+
+		if (entity.getKey() == null) {
+			if (resultListener != null) {
+				resultListener.onError(new DatabaseException("Entity must be added to the database before modifying it!"));
+			}
+			return;
+		}
+
+		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.child(entity.getKey()) // Reference contents via the unique string key
+				.setValue(entity, new DatabaseReference.CompletionListener() {
+
+					@Override public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+
+						if (databaseError != null) {
+							if (resultListener != null) {
+								resultListener.onError(new DatabaseException("Entity wasn't modified in the database!", databaseError));
+							}
+						} else {
+							if (resultListener != null) {
+								resultListener.onSuccess();
+							}
+						}
+
+					}
+
+				});
+
+	}
+	@Override public void modify(T entity) {
+
+		this.modify(entity, null);
+	}
+
+	@Override public void delete(T entity, final FirebaseRepository.ResultListener resultListener) {
+
+		if (entity.getKey() == null) {
+			if (resultListener != null) {
+				resultListener.onSuccess();
+			}
+			return;
+		}
+
+		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.child(entity.getKey())
+				.removeValue(new DatabaseReference.CompletionListener() {
+
+					@Override
+					public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+
+						if (databaseError != null) {
+							if (resultListener != null) {
+								resultListener.onError(new DatabaseException("Entity wasn't deleted from the database!", databaseError));
+							}
+						} else {
+							if (resultListener != null) {
+								resultListener.onSuccess();
+							}
+						}
+					}
+
+				});
+
+	}
+	@Override public void delete(T entity) {
+
+		this.delete(entity, null);
+	}
+
+	@Override public void deleteFirst(int count, final ResultListener resultListener) {
+
+		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.limitToFirst(count)
+				.addListenerForSingleValueEvent(new ValueEventListener() {
+
+					@Override public void onDataChange(DataSnapshot dataSnapshot) {
+
+						// Delete the first n entities found
+						for (DataSnapshot firstEntity : dataSnapshot.getChildren()) {
+							firstEntity.getRef().setValue(null);
+							break;
+						}
+
+						if (resultListener != null) {
+							resultListener.onSuccess();
+						}
+
+					}
+
+					@Override public void onCancelled(DatabaseError databaseError) {
+
+						if (resultListener != null) {
+							resultListener.onError(new DatabaseException(databaseError));
+						}
+
+					}
+
+				});
+
+	}
+	@Override public void deleteFirst(int count) {
+
+		this.deleteFirst(count, null);
+	}
+	@Override public void deleteFirst(final ResultListener resultListener) {
+
+		this.deleteFirst(1, resultListener);
+	}
+	@Override public void deleteFirst() {
+
+		this.deleteFirst(1, null);
+	}
+
+	@Override public void clear(final ResultListener resultListener) {
+
+		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.removeValue(new DatabaseReference.CompletionListener() {
+
+					@Override public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
+
+						if (databaseError != null) {
+							if (resultListener != null) {
+								resultListener.onError(new DatabaseException("Not all entities were deleted!", databaseError));
+							}
 
 						} else {
 							if (resultListener != null) {
@@ -49,158 +199,6 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 					}
 
 				});
-	}
-	@Override public void add(T entity) {
-		this.add(entity, null);
-	}
-
-	@Override public void modify(T entity, final ResultListener resultListener) {
-
-		// Jos henkilö ei ole vielä kannassa, insert
-		if (entity.getKey() == null) {
-			if (resultListener != null) {
-				resultListener.onError(new DatabaseException("Kirja on jo tietokannassa!"));
-			}
-			return;
-		}
-
-		// Lisää entity
-		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.child(entity.getKey()) // Luo automaattisesti generoidun avaimen (key)
-			.setValue(entity, new DatabaseReference.CompletionListener() {
-
-				@Override public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-
-					if (databaseError != null) {
-						if (resultListener != null) {
-							resultListener.onError(new DatabaseException("Tietoa ei muokattu!", databaseError));
-						}
-						System.out.println(databaseError.getMessage());
-
-					} else {
-						if (resultListener != null) {
-							resultListener.onSuccess();
-						}
-					}
-
-				}
-
-			});
-
-	}
-	@Override public void modify(T entity) {
-		this.modify(entity, null);
-	}
-
-	@Override public void delete(T entity, final FirebaseRepository.ResultListener resultListener) {
-
-		// Jos henkilö ei edes ole kannassa
-		if (entity.getKey() == null) {
-			if (resultListener != null) {
-				resultListener.onSuccess();
-			}
-			return;
-		}
-
-		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.child(entity.getKey())
-			.removeValue(new DatabaseReference.CompletionListener() {
-
-				@Override
-				public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-
-				if (databaseError != null) {
-					System.out.println(databaseError.getMessage());
-					if (resultListener != null) {
-						resultListener.onError(new DatabaseException("Tietoa ei poistettu!", databaseError));
-					}
-
-				} else {
-					if (resultListener != null) {
-						resultListener.onSuccess();
-					}
-
-				}
-				}
-
-			});
-	}
-	@Override public void delete(T entity) {
-		this.delete(entity, null);
-	}
-
-	@Override public void deleteFirst(int count, final ResultListener resultListener) {
-
-		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.limitToFirst(count)
-			.addListenerForSingleValueEvent(new ValueEventListener() {
-
-				@Override public void onDataChange(DataSnapshot dataSnapshot) {
-
-					// Poista ensimmäinen kirja
-					for (DataSnapshot firstEntity : dataSnapshot.getChildren()) {
-						firstEntity.getRef().setValue(null);
-						break;
-					}
-
-					if (resultListener != null) {
-						resultListener.onSuccess();
-					}
-				}
-
-				@Override public void onCancelled(DatabaseError databaseError) {
-					if (resultListener != null) {
-						resultListener.onError(new DatabaseException(databaseError));
-					}
-				}
-
-			});
-
-	}
-	@Override public void deleteFirst(final ResultListener resultListener) {
-
-		this.deleteFirst(1, resultListener);
-	}
-	@Override public void deleteFirst(int count) {
-
-		this.deleteFirst(count, null);
-	}
-	@Override public void deleteFirst() {
-
-		this.deleteFirst(1, null);
-	}
-
-	@Override public void clear(final ResultListener resultListener) {
-
-		// Poista kaikki kirjat
-		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.removeValue(new DatabaseReference.CompletionListener() {
-
-				@Override public void onComplete(DatabaseError databaseError, DatabaseReference databaseReference) {
-
-				if (databaseError != null) {
-					System.out.println(databaseError.getMessage());
-					if (resultListener != null) {
-						resultListener.onError(new DatabaseException("Kaikkia tietoja ei poistettu!", databaseError));
-					}
-
-				} else {
-					if (resultListener != null) {
-						resultListener.onSuccess();
-					}
-				}
-
-				}
-
-			});
 
 	}
 	@Override public void clear() {
@@ -210,34 +208,36 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 
 	@Override public void getAll(final ResultItemsListener<T> resultItemsListener) {
 
-		// Jos listeneriä ei annettu, error
 		if (resultItemsListener == null) {
-			throw new NullPointerException("Tietoja ei voi saada ilman 'ResultItemsListener<T>'-kuuntelijaa!");
+			throw new NullPointerException("Entities cannot be gotten without passed 'ResultItemsListener<T>'-listener!");
 		}
 
-		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
 				.child(FirebaseDatabase.getUserRootNodeName())
-				.child(entityClass.getSimpleName())
+				.child(this.getTableName())
 				.addListenerForSingleValueEvent(new ValueEventListener() {
 
 					@Override public void onDataChange(DataSnapshot dataSnapshot) {
 
 						ArrayList<T> foundEntities = new ArrayList<>();
 
-						// Looppaa lista löytyneistä kirjoista
-						for (DataSnapshot kirjaDataSnapshot : dataSnapshot.getChildren()) {
-							T foundEntity = kirjaDataSnapshot.getValue(FirebaseRepository.this.entityClass);
-							foundEntity.setKey(kirjaDataSnapshot.getKey());
+						// Loop all found entities, convert them to objects and add to list
+						for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
+
+							T foundEntity = childDataSnapshot.getValue(FirebaseRepository.this.entityClass);
+							foundEntity.setKey(childDataSnapshot.getKey());
 
 							foundEntities.add(foundEntity);
 						}
 
 						resultItemsListener.onSuccess(foundEntities);
+
 					}
 
 					@Override public void onCancelled(DatabaseError databaseError) {
+
 						resultItemsListener.onError(new DatabaseException(databaseError));
+
 					}
 
 				});
@@ -245,78 +245,80 @@ public abstract class FirebaseRepository<T extends Entity> extends Repository<T>
 	}
 	@Override public void getByKey(String key, final ResultItemListener<T> resultItemListener) {
 
-		// Jos listeneriä ei annettu, error
 		if (resultItemListener == null) {
-			throw new NullPointerException("Tietoa ei voi saada ilman 'ResultItemListener<T>'-kuuntelijaa!");
+			throw new NullPointerException("Entity cannot be gotten without passed 'ResultItemListener<T>'-listener!");
 		}
 
-		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.child(key)
-			.addListenerForSingleValueEvent(new ValueEventListener() {
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.child(key)
+				.addListenerForSingleValueEvent(new ValueEventListener() {
 
-				@Override public void onDataChange(DataSnapshot data) {
+					@Override public void onDataChange(DataSnapshot data) {
 
-					if (data != null && data.exists()) {
-						T entity = data.getValue(FirebaseRepository.this.entityClass);
-						entity.setKey(data.getKey());
-						resultItemListener.onSuccess(entity);
-					} else {
-						resultItemListener.onSuccess(null);
+						if (data != null && data.exists()) {
+
+							T entity = data.getValue(FirebaseRepository.this.entityClass);
+							entity.setKey(data.getKey());
+							resultItemListener.onSuccess(entity);
+
+						} else {
+							resultItemListener.onSuccess(null);
+						}
+
 					}
 
-				}
+					@Override public void onCancelled(DatabaseError databaseError) {
 
-				@Override public void onCancelled(DatabaseError databaseError) {
-					resultItemListener.onError(new DatabaseException(databaseError));
-				}
+						resultItemListener.onError(new DatabaseException(databaseError));
 
-			});
+					}
+
+				});
 
 	}
-	@Override public void getFirst(final ResultItemListener<T> resultItemListener) {
+	@Override public void getFirst(int count, final ResultItemsListener<T> resultItemsListener) {
 
-		// Jos listeneriä ei annettu, error
-		if (resultItemListener == null) {
-			throw new NullPointerException("Ensimmäistä tietoa ei voi saada ilman 'ResultItemListener<T>'-kuuntelijaa!");
+		if (resultItemsListener == null) {
+			throw new NullPointerException("Entities cannot be gotten without passed 'ResultItemsListener<T>'-listener!");
 		}
 
-		// Lisää kuuntelija Firebase-tietokannalle "KirjatRepository"-tauluun
 		com.google.firebase.database.FirebaseDatabase.getInstance().getReference()
-			.child(FirebaseDatabase.getUserRootNodeName())
-			.child(entityClass.getSimpleName())
-			.limitToFirst(1)
-			.addListenerForSingleValueEvent(new ValueEventListener() {
+				.child(FirebaseDatabase.getUserRootNodeName())
+				.child(this.getTableName())
+				.limitToFirst(count)
+				.addListenerForSingleValueEvent(new ValueEventListener() {
 
-				@Override public void onDataChange(DataSnapshot dataSnapshot) {
+					@Override public void onDataChange(DataSnapshot dataSnapshot) {
 
-					// Jos ainakin yksi kirja löytyi, palauta se
-					for (DataSnapshot foundEntity : dataSnapshot.getChildren()) {
-						T entity = foundEntity.getValue(FirebaseRepository.this.entityClass);
-						entity.setKey(foundEntity.getKey());
+						ArrayList<T> foundEntities = new ArrayList<>();
 
-						resultItemListener.onSuccess(entity);
-						return;
+						// Loop all found entities
+						for (DataSnapshot childDataSnapshot : dataSnapshot.getChildren()) {
+
+							T entity = childDataSnapshot.getValue(FirebaseRepository.this.entityClass);
+							entity.setKey(childDataSnapshot.getKey());
+
+							foundEntities.add(entity);
+						}
+
+						resultItemsListener.onSuccess(foundEntities);
+
 					}
 
-					// Jos yhtään ei löytynyt, palauta null
-					resultItemListener.onSuccess(null);
-					return;
-				}
+					@Override public void onCancelled(DatabaseError databaseError) {
 
-				@Override public void onCancelled(DatabaseError databaseError) {
-					resultItemListener.onError(new DatabaseException(databaseError));
-				}
+						resultItemsListener.onError(new DatabaseException(databaseError));
 
-			});
+					}
+
+				});
+
 	}
+	@Override public void getFirst(final ResultItemsListener<T> resultItemsListener) {
 
-	// CONSTRUCTORS
-	public FirebaseRepository(Class<T> entityClass) {
-
-		super(entityClass);
+		this.getFirst(1, resultItemsListener);
 	}
 
 }
